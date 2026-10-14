@@ -53,7 +53,7 @@ func (c *Codec) ReadFile(filename string) (string, error) {
 
 	for {
 		token, err := decoder.Token()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

@@ -603,7 +603,7 @@ func (a *ChatAgent) Run() error {
 	for {
 		line, quit, err := readInput()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return fmt.Errorf("chat: input error: %w", err)

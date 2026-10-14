@@ -3,6 +3,7 @@ package pptx
 import (
 	"archive/zip"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -54,7 +55,7 @@ func (c *Codec) ReadFile(path string) (string, error) {
 			decoder := xml.NewDecoder(rc)
 			for {
 				token, err := decoder.Token()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					break
 				}
 				if err != nil {
