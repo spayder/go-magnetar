@@ -486,17 +486,9 @@ func (g *GenericTools) SSHExec(command, stdin, addr, userParam, dirParam string)
 	return outputStr
 }
 
-// SystemDate executes the date command and returns the output.
+// SystemDate returns the current date in the "Mon Jan _2 15:04:05 MST 2006" format.
 func (g *GenericTools) SystemDate() string {
-	cmd := exec.Command("date")
-
-	output, err := cmd.Output()
-	if err != nil {
-		printer.Error("system_date: command failed", "err", err, "output", string(output))
-		return fmt.Sprintf("error: %v\n%s", err, string(output))
-	}
-
-	return strings.TrimSpace(string(output))
+	return time.Now().Format(time.UnixDate)
 }
 
 // SystemGrep executes the system grep command with a limited set of safe arguments:
@@ -670,7 +662,7 @@ func (g *GenericTools) DefinitionSystemDate() openai.Tool {
 		Type: openai.ToolTypeFunction,
 		Function: &openai.FunctionDefinition{
 			Name:        "system_date",
-			Description: "Execute the date command to get the current system time",
+			Description: "Return the current date in the \"Mon Jan _2 15:04:05 MST 2006\" format.",
 			Parameters: map[string]any{
 				"type":       "object",
 				"properties": map[string]any{},
@@ -958,7 +950,7 @@ func StaticDefinitionSystemDate() openai.Tool {
 		Type: openai.ToolTypeFunction,
 		Function: &openai.FunctionDefinition{
 			Name:        "system_date",
-			Description: "Execute the date command to get the current system time",
+			Description: "Return the current date in the \"Mon Jan _2 15:04:05 MST 2006\" format.",
 			Parameters: map[string]any{
 				"type":       "object",
 				"properties": map[string]any{},

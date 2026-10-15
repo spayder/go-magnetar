@@ -9,7 +9,7 @@ go-magnetar provides the following tools for the chat agent:
 | `file_write` | `(filename: string, content: string) -> bool` | Writes content to a file in the filesystem (blocked in read-only mode) |
 | `exec` | `(command: string, stdin: string) -> string` | Executes a shell command via `sh -c` with clean environment, current working directory, and built-in safety guard |
 | `ssh` | `(command: string, stdin: string, addr: string, user: string, dir: string) -> string` | Execute a shell command on a remote server via SSH. Connection parameters loaded from config. `user` and `dir` are optional; if not provided, uses `ssh.user` and `ssh.remote_dir` from config |
-| `system_date` | `() -> string` | Executes the date command to get the current system time |
+| `system_date` | `() -> string` | Returns the current date in the "Mon Jan _2 15:04:05 MST 2006" format |
 | `system_grep` | `(filename: string, pattern: string) -> string` | Executes system grep command with safe parameters: -n (always), -i (case-insensitive), -r (recursive), -E (extended regex) |
 | `web_fetch` | `(url: string) -> string` | Fetches a web page and returns Markdown content (also fetches Confluence pages, JIRA issues, GitHub repositories/Issues/milestones, GitLab merge requests, RSS feeds). See [tool_web_fetch.md](./tool_web_fetch.md) for complete documentation |
 | `search` | `(query: string) -> string` | Execute web and knowledge base search in parallel and return merged results |

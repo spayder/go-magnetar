@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/wmentor/go-magnetar/internal/config"
 	"github.com/wmentor/go-magnetar/internal/plugin"
@@ -69,5 +70,25 @@ func TestSSHExecEnableFlag(t *testing.T) {
 				t.Errorf("SSHExec() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestSystemDate(t *testing.T) {
+	t.Parallel()
+
+	g := newTestTools(t, "", false)
+
+	// date(1) prints whole seconds, so truncate the lower bound.
+	before := time.Now().Truncate(time.Second)
+	got := g.SystemDate()
+	after := time.Now()
+
+	parsed, err := time.Parse(time.UnixDate, got)
+	if err != nil {
+		t.Fatalf("SystemDate() = %q, want time.UnixDate format: %v", got, err)
+	}
+
+	if parsed.Before(before) || parsed.After(after) {
+		t.Errorf("SystemDate() = %q, want a time between %v and %v", got, before, after)
 	}
 }
