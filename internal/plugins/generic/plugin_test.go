@@ -108,6 +108,13 @@ func TestProcessFiles(t *testing.T) {
 			filename: "test.csv",
 			expected: "| name | age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |\n",
 		},
+		{
+			name:     "placeholder inside file content is not expanded",
+			input:    "{{file:%s}}",
+			content:  "see {{file:/does/not/exist.txt}} and {{env:HOME}}",
+			filename: "test.txt",
+			expected: "see {{file:/does/not/exist.txt}} and {{env:HOME}}",
+		},
 	}
 
 	for _, tt := range tests {
@@ -172,6 +179,14 @@ func TestProcessFilesUnchanged(t *testing.T) {
 			name:  "other placeholder type",
 			input: "Hello {{env:HOME}} and {{uuid}}",
 		},
+		{
+			name:  "empty file name",
+			input: "Hello {{file:}}",
+		},
+		{
+			name:  "empty file name between other text",
+			input: "before {{file:}} after",
+		},
 	}
 
 	for _, tt := range tests {
@@ -183,6 +198,64 @@ func TestProcessFilesUnchanged(t *testing.T) {
 				t.Errorf("processFiles(%q) = %q, want it unchanged", tt.input, result)
 			}
 		})
+	}
+}
+
+// A placeholder whose file cannot be read (or is empty) stays in the text.
+func TestProcessFilesKeepsPlaceholder(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		create bool // whether the file is created before the call
+	}{
+		{
+			name:   "file does not exist",
+			create: false,
+		},
+		{
+			name:   "file is empty",
+			create: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			path := filepath.Join(t.TempDir(), "file.txt")
+			if tt.create {
+				writeTestFile(t, path, "")
+				defer os.Remove(path)
+			}
+
+			input := fmt.Sprintf("before {{file:%s}} after", path)
+
+			result := processFiles(input)
+			if result != input {
+				t.Errorf("processFiles(%q) = %q, want it unchanged", input, result)
+			}
+		})
+	}
+}
+
+// An unreadable placeholder must not stop the following ones from
+// being replaced.
+func TestProcessFilesUnreadableThenReadable(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	missing := filepath.Join(dir, "missing.txt")
+	existing := filepath.Join(dir, "existing.txt")
+	writeTestFile(t, existing, "content")
+	defer os.Remove(existing)
+
+	input := fmt.Sprintf("{{file:%s}} and {{file:%s}}", missing, existing)
+	expected := fmt.Sprintf("{{file:%s}} and content", missing)
+
+	result := processFiles(input)
+	if result != expected {
+		t.Errorf("processFiles(%q) = %q, want %q", input, result, expected)
 	}
 }
 
