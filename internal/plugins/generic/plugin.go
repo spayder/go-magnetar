@@ -166,11 +166,13 @@ func processEnvVars(text string) string {
 
 func replaceAllPatterns(s, prefix, suffix string, repl func(string) string) string {
 	result := s
+	searchFrom := 0
 	for {
-		start := strings.Index(result, prefix)
+		start := strings.Index(result[searchFrom:], prefix)
 		if start == -1 {
 			break
 		}
+		start += searchFrom
 		end := strings.Index(result[start+len(prefix):], suffix)
 		if end == -1 {
 			break
@@ -180,6 +182,7 @@ func replaceAllPatterns(s, prefix, suffix string, repl func(string) string) stri
 		match := result[start : end+len(suffix)]
 		replacement := repl(match)
 		result = result[:start] + replacement + result[end+len(suffix):]
+		searchFrom = start + len(replacement)
 	}
 	return result
 }
