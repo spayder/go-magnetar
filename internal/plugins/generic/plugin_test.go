@@ -118,6 +118,7 @@ func TestProcessFiles(t *testing.T) {
 			input := fmt.Sprintf(tt.input, filePath)
 
 			writeTestFile(t, filePath, tt.content)
+			defer os.Remove(filePath)
 
 			result := processFiles(input)
 			if result != tt.expected {
@@ -133,8 +134,11 @@ func TestProcessFilesMultipleFiles(t *testing.T) {
 	dir := t.TempDir()
 	first := filepath.Join(dir, "first.txt")
 	second := filepath.Join(dir, "second.md")
+	// t.TempDir() already removes dir; the explicit removal is a safeguard.
 	writeTestFile(t, first, "one")
+	defer os.Remove(first)
 	writeTestFile(t, second, "# two")
+	defer os.Remove(second)
 
 	input := fmt.Sprintf("{{file:%s}} then {{file:%s}}", first, second)
 	expected := "one then # two"
