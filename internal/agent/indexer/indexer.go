@@ -48,6 +48,12 @@ func New(cfg *config.Config, root *os.Root, state *plugin.State) (*Indexer, erro
 
 // IndexFile indexes a single file into the RAG knowledge base.
 func (idx *Indexer) IndexFile(filename string, msg string) error {
+	_, err := idx.indexFileChunks(filename, msg)
+	return err
+}
+
+// indexFile reads a single file, indexes it and returns the number of saved chunks
+func (idx *Indexer) indexFileChunks(filename, msg string) (int, error) {
 	printer.Print(printer.IconFile, "indexer: indexing file", "file", filename)
 
 	ext := strings.ToLower(filepath.Ext(filename))
@@ -58,17 +64,17 @@ func (idx *Indexer) IndexFile(filename string, msg string) error {
 	if reader, e := codec.GetCodec(ext); e == nil {
 		text, err := reader.ReadFile(filename)
 		if err != nil {
-			return fmt.Errorf("indexer: failed to read %s file %q: %w", ext, filename, err)
+			return 0, fmt.Errorf("indexer: failed to read %s file %q: %w", ext, filename, err)
 		}
 		data = []byte(text)
 	} else {
 		data, err = os.ReadFile(filename)
 		if err != nil {
-			return fmt.Errorf("indexer: failed to read file %q: %w", filename, err)
+			return 0, fmt.Errorf("indexer: failed to read file %q: %w", filename, err)
 		}
 	}
-
 	return idx.chunkAndSave(string(data), msg)
+
 }
 
 // IndexURL fetches content from a URL, chunks it, and stores it in the RAG knowledge base.
@@ -83,11 +89,12 @@ func (idx *Indexer) IndexURL(rawURL string, msg string) error {
 		return fmt.Errorf("indexer: failed to fetch URL %q: %w", rawURL, err)
 	}
 
-	return idx.chunkAndSave(content, msg)
+	_, err = idx.chunkAndSave(content, msg)
+	return err
 }
 
 // chunkAndSave splits content into overlapping chunks and saves each one to RAG.
-func (idx *Indexer) chunkAndSave(content string, msg string) error {
+func (idx *Indexer) chunkAndSave(content string, msg string) (int, error) {
 	cfg := chunk.Config{
 		MaxSize: idx.cfg.Int("rag.chunk.size"),
 		Overlap: idx.cfg.Int("rag.chunk.overlap"),
@@ -100,5 +107,5 @@ func (idx *Indexer) chunkAndSave(content string, msg string) error {
 			saved++
 		}
 	}
-	return nil
+	return saved, nil
 }
