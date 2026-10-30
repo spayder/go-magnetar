@@ -62,7 +62,7 @@ func (p *Plugin) execute(ctx context.Context, params *plugin.ChatCommandInput) (
 		return nil, fmt.Errorf("usage: /index <path|url> [-r|--recursive] [-m <message>]")
 	}
 
-	opts, err := parsIndexArgs(args)
+	opts, err := parseIndexArgs(args)
 	if err != nil {
 		return nil, fmt.Errorf("parse index arg error: %w", err)
 	}
@@ -101,7 +101,7 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
-func parsIndexArgs(args string) (IndexArgs, error) {
+func parseIndexArgs(args string) (IndexArgs, error) {
 	parts := strings.Fields(args)
 	opts := IndexArgs{}
 

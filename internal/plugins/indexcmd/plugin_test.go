@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestParsIndexArgs(t *testing.T) {
+func TestParseIndexArgs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -89,15 +89,15 @@ func TestParsIndexArgs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := parsIndexArgs(tt.args)
+			got, err := parseIndexArgs(tt.args)
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("parsIndexArg(%q) error = %v, wantErr %v", tt.args, err, tt.wantErr)
+				t.Fatalf("parseIndexArgs(%q) error = %v, wantErr %v", tt.args, err, tt.wantErr)
 			}
 			if tt.wantErr {
 				return
 			}
 			if got != tt.want {
-				t.Errorf("parsIndexArg(%q) = %+v, want %+v", tt.args, got, tt.want)
+				t.Errorf("parseIndexArgs(%q) = %+v, want %+v", tt.args, got, tt.want)
 			}
 		})
 	}
