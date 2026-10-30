@@ -42,7 +42,7 @@ func (p *Plugin) Init(s *plugin.State, hub plugin.Hub) error {
 	hub.RegisterChatCommand(plugin.ChatCommand{
 		Name:    "index",
 		Aliases: []string{"i"},
-		Help:    "Index file or URL into RAG knowledge base (auto-detects URL vs file)",
+		Help:    "Index a file, URL, or directory into RAG knowledge base (use `-r` for directories)",
 		Execute: p.execute,
 	})
 
@@ -59,7 +59,7 @@ func (p *Plugin) Init(s *plugin.State, hub plugin.Hub) error {
 func (p *Plugin) execute(ctx context.Context, params *plugin.ChatCommandInput) (*plugin.ChatCommandResponse, error) {
 	args := params.Args
 	if args == "" {
-		return nil, fmt.Errorf("usage: /index <path|url> [-r] [-m <message>]")
+		return nil, fmt.Errorf("usage: /index <path|url> [-r|--recursive] [-m <message>]")
 	}
 
 	opts, err := parsIndexArgs(args)
@@ -75,10 +75,14 @@ func (p *Plugin) execute(ctx context.Context, params *plugin.ChatCommandInput) (
 		return plugin.NopChatCommandResponse, nil
 	case isDir(opts.target):
 		if !opts.recursive {
-			return nil, fmt.Errorf("target is a directory, use -r for recursive indexing")
+			return nil, fmt.Errorf("target is a directory, use -r or --recursive for recursive indexing")
 		}
 
-		return nil, fmt.Errorf("directory indexing not implemented yet")
+		err := p.idx.IndexDirectory(opts.target, opts.message)
+		if err != nil {
+			return nil, fmt.Errorf("index directory failed: %w", err)
+		}
+		return plugin.NopChatCommandResponse, nil
 	default:
 		if err := p.idx.IndexFile(opts.target, opts.message); err != nil {
 			return nil, fmt.Errorf("index file failed: %w", err)
