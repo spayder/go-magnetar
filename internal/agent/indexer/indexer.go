@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,16 @@ type Indexer struct {
 	rag   *rag.RAGTools
 	fetch *webfetch.Tool
 }
+
+// excludedDirNames are directories that should not be indexed
+var excludedDirNames = map[string]struct{}{
+	"node_modules": {},
+	".git":         {},
+	"__pycache__":  {},
+}
+
+// plainTextExts are file extensions that are considered plain text
+var plainTextExts = map[string]struct{}{".md": {}, ".txt": {}}
 
 // New creates a new Indexer instance.
 func New(cfg *config.Config, root *os.Root, state *plugin.State) (*Indexer, error) {
@@ -108,4 +119,57 @@ func (idx *Indexer) chunkAndSave(content string, msg string) (int, error) {
 		}
 	}
 	return saved, nil
+}
+
+// IndexDirectory indexes all indexable files in a directory into the RAG knowledge base.
+func (idx *Indexer) IndexDirectory(root string, msg string) error {
+	return nil
+}
+
+// listIndexableFiles lists all indexable files in a directory.
+func listIndexableFiles(path string) ([]string, error) {
+	var found []string
+
+	err := filepath.WalkDir(path, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if p == path {
+				return err
+			}
+			printer.Warn("indexer: skipping unreadable entry", "path", p, "err", err)
+			return nil
+		}
+
+		if d.IsDir() {
+			if _, ok := excludedDirNames[d.Name()]; ok {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !isIndexable(p) {
+			return nil
+		}
+
+		found = append(found, p)
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("walk %q: %w", path, err)
+	}
+
+	return found, nil
+}
+
+// isIndexable checks if a file is indexable based on its extension.
+func isIndexable(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	if _, ok := plainTextExts[ext]; ok {
+		return true
+	}
+
+	if _, err := codec.GetCodec(ext); err == nil {
+		return true
+	}
+	return false
 }
